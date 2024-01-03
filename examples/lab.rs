@@ -1,5 +1,5 @@
 extern crate frug3d as frug;
 
 fn main() {
-    frug::init();
+    frug::run();
 }
