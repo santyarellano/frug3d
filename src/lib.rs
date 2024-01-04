@@ -5,7 +5,7 @@ mod consts;
 mod display;
 
 use consts::*;
-use display::draw_pixel;
+use display::{clear_color_buffer, draw_pixel};
 use error_iter::ErrorIter as _;
 use log::error;
 use pixels::{Error, Pixels, SurfaceTexture};
@@ -60,12 +60,6 @@ impl World {
                 && y >= self.box_y
                 && y < self.box_y + BOX_SIZE;
 
-            /*let rgba = if inside_the_box {
-                [0x5e, 0x48, 0xe8, 0xff]
-            } else {
-                [0x48, 0xb2, 0xe8, 0xff]
-            };*/
-
             if inside_the_box {
                 draw_pixel(frame, x as usize, y as usize, [0x5e, 0x48, 0xe8, 0xff]);
             }
@@ -99,6 +93,7 @@ pub fn run() -> Result<(), Error> {
     event_loop.run(move |event, _, control_flow| {
         // Draw the current frame
         if let Event::RedrawRequested(_) = event {
+            clear_color_buffer(pixels.frame_mut(), BACKGROUND_COLOR);
             world.draw(pixels.frame_mut());
             if let Err(err) = pixels.render() {
                 log_error("pixels.render", err);
