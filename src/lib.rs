@@ -5,7 +5,7 @@ mod consts;
 mod display;
 
 use consts::*;
-use display::{clear_color_buffer, draw_pixel};
+use display::{clear_color_buffer, draw_line, draw_pixel};
 use error_iter::ErrorIter as _;
 use log::error;
 use pixels::{Error, Pixels, SurfaceTexture};
@@ -94,7 +94,15 @@ pub fn run() -> Result<(), Error> {
         // Draw the current frame
         if let Event::RedrawRequested(_) = event {
             clear_color_buffer(pixels.frame_mut(), BACKGROUND_COLOR);
-            world.draw(pixels.frame_mut());
+            draw_line(
+                pixels.frame_mut(),
+                0,
+                0,
+                WIDTH as i32,
+                HEIGHT as i32,
+                [0x00, 0xff, 0x00, 0xff],
+            );
+            //world.draw(pixels.frame_mut());
             if let Err(err) = pixels.render() {
                 log_error("pixels.render", err);
                 *control_flow = ControlFlow::Exit;

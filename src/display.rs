@@ -14,3 +14,34 @@ pub fn clear_color_buffer(frame: &mut [u8], rgba: [u8; 4]) {
         pixel.copy_from_slice(&rgba);
     }
 }
+
+pub fn draw_line(frame: &mut [u8], x0: i32, y0: i32, x1: i32, y1: i32, rgba: [u8; 4]) {
+    let delta_x = x1 - x0;
+    let delta_y = y1 - y0;
+
+    // obtain the longest side length
+    let side_length = if delta_x.abs() >= delta_y.abs() {
+        delta_x.abs()
+    } else {
+        delta_y.abs()
+    };
+
+    // Find how much we should increment in both x and y
+    let x_inc = delta_x as f32 / side_length as f32;
+    let y_inc = delta_y as f32 / side_length as f32;
+
+    let mut current_x = x0 as f32;
+    let mut current_y = y0 as f32;
+
+    // loop each step and draw the pixel
+    for i in 0..side_length {
+        draw_pixel(
+            frame,
+            current_x.round() as usize,
+            current_y.round() as usize,
+            rgba,
+        );
+        current_x += x_inc;
+        current_y += y_inc;
+    }
+}
