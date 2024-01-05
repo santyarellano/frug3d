@@ -102,7 +102,7 @@ pub fn run() -> Result<(), Error> {
                 HEIGHT as i32 - 1,
                 WIDTH as i32,
                 HEIGHT as i32 - 1,
-                [0x00, 0xff, 0x00, 0xff],
+                C_GREEN,
             );
             //world.draw(pixels.frame_mut());
             if let Err(err) = pixels.render() {
