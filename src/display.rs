@@ -79,3 +79,15 @@ pub fn draw_rect(
         x += 1;
     }
 }
+
+pub fn draw_grid(frame: &mut [u8], rgba: [u8; 4], gap: usize) {
+    let mut x = gap / 2;
+    while x < WIDTH as usize {
+        let mut y = gap / 2;
+        while y < HEIGHT as usize {
+            draw_pixel(frame, x, y, rgba);
+            y += gap;
+        }
+        x += gap;
+    }
+}

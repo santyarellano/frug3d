@@ -5,7 +5,7 @@ mod consts;
 mod display;
 
 use consts::*;
-use display::{clear_color_buffer, draw_line, draw_pixel, draw_rect, draw_triangle};
+use display::{clear_color_buffer, draw_grid, draw_line, draw_pixel, draw_rect, draw_triangle};
 use error_iter::ErrorIter as _;
 use log::error;
 use pixels::{Error, Pixels, SurfaceTexture};
@@ -51,14 +51,7 @@ impl World {
     ///
     /// Assumes the default texture format: `wgpu::TextureFormat::Rgba8UnormSrgb`
     fn draw(&self, frame: &mut [u8]) {
-        draw_rect(
-            frame,
-            self.box_x as usize,
-            self.box_y as usize,
-            BOX_SIZE as usize,
-            BOX_SIZE as usize,
-            C_BLUE,
-        );
+        draw_grid(frame, C_GREEN, 10);
     }
 }
 
