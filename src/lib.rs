@@ -5,7 +5,7 @@ mod consts;
 mod display;
 
 use consts::*;
-use display::{clear_color_buffer, draw_line, draw_pixel, draw_triangle};
+use display::{clear_color_buffer, draw_line, draw_pixel, draw_rect, draw_triangle};
 use error_iter::ErrorIter as _;
 use log::error;
 use pixels::{Error, Pixels, SurfaceTexture};
@@ -51,21 +51,14 @@ impl World {
     ///
     /// Assumes the default texture format: `wgpu::TextureFormat::Rgba8UnormSrgb`
     fn draw(&self, frame: &mut [u8]) {
-        for i in 0..(frame.len() / 4) {
-            let x = (i % WIDTH as usize) as i16;
-            let y = (i / WIDTH as usize) as i16;
-
-            let inside_the_box = x >= self.box_x
-                && x < self.box_x + BOX_SIZE
-                && y >= self.box_y
-                && y < self.box_y + BOX_SIZE;
-
-            if inside_the_box {
-                draw_pixel(frame, x as usize, y as usize, [0x5e, 0x48, 0xe8, 0xff]);
-            }
-
-            /*pixel.copy_from_slice(&rgba);*/
-        }
+        draw_rect(
+            frame,
+            self.box_x as usize,
+            self.box_y as usize,
+            BOX_SIZE as usize,
+            BOX_SIZE as usize,
+            C_BLUE,
+        );
     }
 }
 
@@ -94,17 +87,7 @@ pub fn run() -> Result<(), Error> {
         // Draw the current frame
         if let Event::RedrawRequested(_) = event {
             clear_color_buffer(pixels.frame_mut(), BACKGROUND_COLOR);
-            draw_triangle(
-                pixels.frame_mut(),
-                WIDTH as i32 / 2,
-                0,
-                0,
-                HEIGHT as i32 - 1,
-                WIDTH as i32,
-                HEIGHT as i32 - 1,
-                C_GREEN,
-            );
-            //world.draw(pixels.frame_mut());
+            world.draw(pixels.frame_mut());
             if let Err(err) = pixels.render() {
                 log_error("pixels.render", err);
                 *control_flow = ControlFlow::Exit;

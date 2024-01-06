@@ -60,3 +60,22 @@ pub fn draw_triangle(
     draw_line(frame, x1, y1, x2, y2, rgba);
     draw_line(frame, x2, y2, x0, y0, rgba);
 }
+
+pub fn draw_rect(
+    frame: &mut [u8],
+    x_pos: usize,
+    y_pos: usize,
+    width: usize,
+    height: usize,
+    rgba: [u8; 4],
+) {
+    let mut x = x_pos;
+    while x < x_pos + width && x < WIDTH as usize {
+        let mut y = y_pos;
+        while y < y_pos + height && y < HEIGHT as usize {
+            draw_pixel(frame, x, y, rgba);
+            y += 1;
+        }
+        x += 1;
+    }
+}
