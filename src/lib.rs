@@ -3,6 +3,7 @@
 
 mod consts;
 mod display;
+mod mesh;
 mod triangle;
 mod vector;
 
