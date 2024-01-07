@@ -3,6 +3,7 @@
 
 mod consts;
 mod display;
+mod vector;
 
 use consts::*;
 use display::{clear_color_buffer, draw_grid, draw_line, draw_pixel, draw_rect, draw_triangle};
