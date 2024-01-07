@@ -3,6 +3,7 @@
 
 mod consts;
 mod display;
+mod triangle;
 mod vector;
 
 use consts::*;
