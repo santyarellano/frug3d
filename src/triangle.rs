@@ -1,11 +1,11 @@
-use crate::vector::vec2;
+use crate::vector::Vec2;
 
-pub struct face {
+pub struct Face {
     a: i32,
     b: i32,
     c: i32,
 }
 
-pub struct triangle {
-    points: [vec2; 2],
+pub struct Triangle {
+    points: [Vec2; 2],
 }
