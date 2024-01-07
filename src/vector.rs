@@ -1,12 +1,28 @@
 pub struct Vec2 {
-    x: f32,
-    y: f32,
+    pub x: f32,
+    pub y: f32,
+}
+
+impl Default for Vec2 {
+    fn default() -> Self {
+        Vec2 { x: 0.0, y: 0.0 }
+    }
 }
 
 pub struct Vec3 {
-    x: f32,
-    y: f32,
-    z: f32,
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+}
+
+impl Default for Vec3 {
+    fn default() -> Self {
+        Vec3 {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        }
+    }
 }
 
 // ===============================================================================

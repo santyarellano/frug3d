@@ -11,6 +11,7 @@ use consts::*;
 use display::{clear_color_buffer, draw_grid, draw_line, draw_pixel, draw_rect, draw_triangle};
 use error_iter::ErrorIter as _;
 use log::error;
+use mesh::load_obj_file_data;
 use pixels::{Error, Pixels, SurfaceTexture};
 use winit::dpi::LogicalSize;
 use winit::event::{Event, VirtualKeyCode};
@@ -78,6 +79,8 @@ pub fn run() -> Result<(), Error> {
         Pixels::new(WIDTH, HEIGHT, surface_texture)?
     };
     let mut world = World::new();
+
+    load_obj_file_data("assets/cube.obj".to_string());
 
     event_loop.run(move |event, _, control_flow| {
         // Draw the current frame
