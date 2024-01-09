@@ -63,13 +63,13 @@ pub fn load_obj_file_data(filename: String) -> Result<Mesh, Error> {
 
             (
                 vertex_indices[0],
-                vertex_indices[1],
-                vertex_indices[2],
                 texture_indices[0],
-                texture_indices[1],
-                texture_indices[2],
                 normal_indices[0],
+                vertex_indices[1],
+                texture_indices[1],
                 normal_indices[1],
+                vertex_indices[2],
+                texture_indices[2],
                 normal_indices[2],
             ) = sscanf::scanf!(
                 line,
@@ -94,6 +94,7 @@ pub fn load_obj_file_data(filename: String) -> Result<Mesh, Error> {
 
             mesh.faces.push(face);
         }
+        //println!("faces len {}", mesh.faces.len());
     }
 
     return Ok(mesh);

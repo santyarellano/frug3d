@@ -49,7 +49,7 @@ impl Renderer {
     /// Create a new `Renderer` instance that can draw a moving box.
     fn new() -> Self {
         let mesh =
-            load_obj_file_data("assets/cube.obj".to_string()).expect("Error reading object data");
+            load_obj_file_data("assets/f22.obj".to_string()).expect("Error reading object data");
 
         let current_time = Instant::now();
 
