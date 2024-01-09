@@ -1,15 +1,17 @@
 use std::fs;
 use std::io::{BufRead, BufReader, Error};
 
+use sscanf::scanf;
+
 use crate::{triangle::Face, vector::Vec3};
 
 // ===================================================================
 // Variables & definitions
 // ===================================================================
 pub struct Mesh {
-    vertices: Vec<Vec3>,
-    faces: Vec<Face>,
-    rotation: Vec3,
+    pub vertices: Vec<Vec3>,
+    pub faces: Vec<Face>,
+    pub rotation: Vec3,
 }
 
 impl Default for Mesh {
@@ -43,10 +45,54 @@ pub fn load_obj_file_data(filename: String) -> Result<Mesh, Error> {
 
         // get vertex data
         if line.starts_with("v ") {
-            let parsed = sscanf::scanf!(line, "v {} {} {}", f32, f32, f32);
-            println!("{:?}\n", parsed);
+            let mut vertex = Vec3 {
+                ..Default::default()
+            };
+            (vertex.x, vertex.y, vertex.z) = sscanf::scanf!(line, "v {} {} {}", f32, f32, f32)
+                .expect("Error reading vertex data.");
 
-            // todo...
+            mesh.vertices.push(vertex);
+        }
+
+        // get face data
+        if line.starts_with("f ") {
+            // note: format is <vertex index>/<texture coords>/<normal indices>
+            let mut vertex_indices: [i32; 3] = [0; 3];
+            let mut texture_indices: [i32; 3] = [0; 3];
+            let mut normal_indices: [i32; 3] = [0; 3];
+
+            (
+                vertex_indices[0],
+                vertex_indices[1],
+                vertex_indices[2],
+                texture_indices[0],
+                texture_indices[1],
+                texture_indices[2],
+                normal_indices[0],
+                normal_indices[1],
+                normal_indices[2],
+            ) = sscanf::scanf!(
+                line,
+                "f {}/{}/{} {}/{}/{} {}/{}/{}",
+                i32,
+                i32,
+                i32,
+                i32,
+                i32,
+                i32,
+                i32,
+                i32,
+                i32
+            )
+            .expect("Error reading face data.");
+
+            let face = Face {
+                a: vertex_indices[0],
+                b: vertex_indices[1],
+                c: vertex_indices[2],
+            };
+
+            mesh.faces.push(face);
         }
     }
 

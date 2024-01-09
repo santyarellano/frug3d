@@ -7,55 +7,206 @@ mod mesh;
 mod triangle;
 mod vector;
 
+use std::time::Instant;
+
 use consts::*;
 use display::{clear_color_buffer, draw_grid, draw_line, draw_pixel, draw_rect, draw_triangle};
 use error_iter::ErrorIter as _;
 use log::error;
-use mesh::load_obj_file_data;
+use mesh::{load_obj_file_data, Mesh};
 use pixels::{Error, Pixels, SurfaceTexture};
+use triangle::Triangle;
+use vector::{Vec2, Vec3};
 use winit::dpi::LogicalSize;
 use winit::event::{Event, VirtualKeyCode};
 use winit::event_loop::{ControlFlow, EventLoop};
 use winit::window::WindowBuilder;
 use winit_input_helper::WinitInputHelper;
 
-/// Representation of the application state. In this example, a box will bounce around the screen.
-struct World {
-    box_x: i16,
-    box_y: i16,
-    velocity_x: i16,
-    velocity_y: i16,
+use crate::vector::{
+    vec3_cross, vec3_dot, vec3_normalize, vec3_rotate_x, vec3_rotate_y, vec3_rotate_z, vec3_sub,
+};
+
+fn project(point: &Vec3, fov_factor: f32) -> Vec2 {
+    Vec2 {
+        x: point.x * fov_factor / point.z,
+        y: point.y * fov_factor / point.z,
+    }
 }
 
-impl World {
-    /// Create a new `World` instance that can draw a moving box.
+/// Representation of the application state. In this example, a box will bounce around the screen.
+struct Renderer {
+    is_running: bool,
+    previous_frame_time: u16,
+    current_time: Instant,
+    camera_pos: Vec3,
+    fov_factor: f32,
+    mesh: Mesh,
+    triangles_to_render: Vec<Triangle>,
+}
+
+impl Renderer {
+    /// Create a new `Renderer` instance that can draw a moving box.
     fn new() -> Self {
+        let mesh =
+            load_obj_file_data("assets/cube.obj".to_string()).expect("Error reading object data");
+
+        let current_time = Instant::now();
+
         Self {
-            box_x: 24,
-            box_y: 16,
-            velocity_x: 1,
-            velocity_y: 1,
+            is_running: true,
+            previous_frame_time: 0,
+            current_time,
+            camera_pos: Vec3 {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            fov_factor: 640.0,
+            mesh,
+            triangles_to_render: Vec::new(),
         }
     }
 
-    /// Update the `World` internal state; bounce the box around the screen.
+    /// Update the `Renderer` internal state; bounce the box around the screen.
     fn update(&mut self) {
-        if self.box_x <= 0 || self.box_x + BOX_SIZE > WIDTH as i16 {
-            self.velocity_x *= -1;
-        }
-        if self.box_y <= 0 || self.box_y + BOX_SIZE > HEIGHT as i16 {
-            self.velocity_y *= -1;
-        }
+        // control FPS by waiting the frame target time
+        //todo!();
 
-        self.box_x += self.velocity_x;
-        self.box_y += self.velocity_y;
+        // Clear array of triangles
+        self.triangles_to_render.clear();
+
+        // add rotation (temporal)
+        self.mesh.rotation.x += 0.01;
+        self.mesh.rotation.y += 0.01;
+        self.mesh.rotation.z += 0.01;
+
+        // loop all triangle faces
+        for mesh_face in self.mesh.faces.iter() {
+            let mut face_vertices: [Vec3; 3] = [
+                {
+                    Vec3 {
+                        ..Default::default()
+                    }
+                },
+                {
+                    Vec3 {
+                        ..Default::default()
+                    }
+                },
+                {
+                    Vec3 {
+                        ..Default::default()
+                    }
+                },
+            ];
+
+            face_vertices[0] = self.mesh.vertices[(mesh_face.a - 1) as usize];
+            face_vertices[1] = self.mesh.vertices[(mesh_face.b - 1) as usize];
+            face_vertices[2] = self.mesh.vertices[(mesh_face.c - 1) as usize];
+
+            let mut transformed_vertices: [Vec3; 3] = [
+                {
+                    Vec3 {
+                        ..Default::default()
+                    }
+                },
+                {
+                    Vec3 {
+                        ..Default::default()
+                    }
+                },
+                {
+                    Vec3 {
+                        ..Default::default()
+                    }
+                },
+            ];
+
+            // * loop all 3 vertices of this current face and apply transformations *
+            for j in 0..3 {
+                let mut transformed_vertex = face_vertices[j];
+                transformed_vertex = vec3_rotate_x(&transformed_vertex, self.mesh.rotation.x);
+                transformed_vertex = vec3_rotate_y(&transformed_vertex, self.mesh.rotation.y);
+                transformed_vertex = vec3_rotate_z(&transformed_vertex, self.mesh.rotation.z);
+
+                // translate the vertex away from the camera
+                transformed_vertex.z += 5.0;
+
+                // save transformed vertex
+                transformed_vertices[j] = transformed_vertex;
+            }
+
+            // * Check backface culling *
+            let vec_a = transformed_vertices[0];
+            let vec_b = transformed_vertices[1];
+            let vec_c = transformed_vertices[2];
+
+            let mut vec_ab = vec3_sub(&vec_b, &vec_a); // B-A
+            let mut vec_ac = vec3_sub(&vec_c, &vec_a); // C-A
+            vec3_normalize(&mut vec_ab);
+            vec3_normalize(&mut vec_ac);
+
+            let mut normal = vec3_cross(&vec_ab, &vec_ac); // Use cross prod to find perpendicular.
+            vec3_normalize(&mut normal); // normalize normal vector
+
+            let cam_ray = vec3_sub(&self.camera_pos, &vec_a);
+
+            // Negative dot product -> not looking towards camera
+            let dot_normal_cam = vec3_dot(&normal, &cam_ray);
+
+            if dot_normal_cam < 0.0 {
+                // Bypass the triangles that are not looking at the camera
+                continue;
+            }
+
+            // * Loop all 3 vertices to perform projection
+            let mut projected_triangle: Triangle = Triangle {
+                ..Default::default()
+            };
+            for j in 0..3 {
+                // project the current vertex
+                let mut projected_point = project(&transformed_vertices[j], self.fov_factor);
+
+                // scale and translate the projected points to the middle of the screen
+                projected_point.x += (WIDTH / 2) as f32;
+                projected_point.y += (HEIGHT / 2) as f32;
+
+                // save that point
+                projected_triangle.points[j] = projected_point;
+            }
+
+            // save the projected triangle in the array of triangles to render
+            // triangles_to_render[i] = projected_triangle;
+            self.triangles_to_render.push(projected_triangle);
+        }
     }
 
-    /// Draw the `World` state to the frame buffer.
+    /// Draw the `Renderer` state to the frame buffer.
     ///
     /// Assumes the default texture format: `wgpu::TextureFormat::Rgba8UnormSrgb`
-    fn draw(&self, frame: &mut [u8]) {
-        draw_grid(frame, C_GREEN, 10);
+    fn draw(&mut self, frame: &mut [u8]) {
+        // Clear screen
+        clear_color_buffer(frame, BACKGROUND_COLOR);
+
+        // * draw stuff here *
+        // loop all projected triangles to render
+        for triangle in self.triangles_to_render.iter() {
+            // draw unfilled faces
+            draw_triangle(
+                frame,
+                triangle.points[0].x as i32,
+                triangle.points[0].y as i32,
+                triangle.points[1].x as i32,
+                triangle.points[1].y as i32,
+                triangle.points[2].x as i32,
+                triangle.points[2].y as i32,
+                C_GREEN,
+            )
+        }
+
+        // Clear the array of triangles to render every frame
+        self.triangles_to_render.clear();
     }
 }
 
@@ -63,6 +214,8 @@ pub fn run() -> Result<(), Error> {
     env_logger::init();
     let event_loop = EventLoop::new();
     let mut input = WinitInputHelper::new();
+
+    // Window setup
     let window = {
         let size = LogicalSize::new(WIDTH as f64, HEIGHT as f64);
         WindowBuilder::new()
@@ -78,15 +231,13 @@ pub fn run() -> Result<(), Error> {
         let surface_texture = SurfaceTexture::new(window_size.width, window_size.height, &window);
         Pixels::new(WIDTH, HEIGHT, surface_texture)?
     };
-    let mut world = World::new();
 
-    load_obj_file_data("assets/cube.obj".to_string());
+    let mut renderer = Renderer::new();
 
     event_loop.run(move |event, _, control_flow| {
         // Draw the current frame
         if let Event::RedrawRequested(_) = event {
-            clear_color_buffer(pixels.frame_mut(), BACKGROUND_COLOR);
-            world.draw(pixels.frame_mut());
+            renderer.draw(pixels.frame_mut());
             if let Err(err) = pixels.render() {
                 log_error("pixels.render", err);
                 *control_flow = ControlFlow::Exit;
@@ -112,7 +263,7 @@ pub fn run() -> Result<(), Error> {
             }
 
             // Update internal state and request a redraw
-            world.update();
+            renderer.update();
             window.request_redraw();
         }
     });

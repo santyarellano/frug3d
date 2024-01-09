@@ -10,7 +10,8 @@ pub const C_BLUE: [u8; 4] = [0x00, 0x00, 0xff, 0xff];
 //======================================================================
 //  VALUES
 //======================================================================
-pub const WIDTH: u32 = 500;
-pub const HEIGHT: u32 = 300;
-pub const BOX_SIZE: i16 = 64;
+pub const WIDTH: u32 = 800;
+pub const HEIGHT: u32 = 500;
 pub const BACKGROUND_COLOR: [u8; 4] = C_BLACK;
+pub const FPS: u32 = 60;
+pub const FRAME_TARGET_TIME: f32 = 1000.0 / FPS as f32;
