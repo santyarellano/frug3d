@@ -18,6 +18,7 @@ pub fn clear_color_buffer(frame: &mut [u8], rgba: [u8; 4]) {
     }
 }
 
+/// Draws a line from coordinate 0 to coordinate 1 given a color and a frame.
 pub fn draw_line(frame: &mut [u8], x0: i32, y0: i32, x1: i32, y1: i32, rgba: [u8; 4]) {
     let delta_x = x1 - x0;
     let delta_y = y1 - y0;
@@ -71,9 +72,25 @@ fn fill_flat_bottom_triangle(
     y0: i32,
     x1: i32,
     y1: i32,
-    mx: i32,
-    my: i32,
+    xm: i32,
+    ym: i32,
 ) {
+    // Find the 2 slopes (two triangle legs)
+    //  slope1 = c0 -> c1
+    //  slope2 = c0 -> cm
+    let inverse_slope1: f32 = (x1 - x0) as f32 / (y1 - y0) as f32;
+    let inverse_slope2: f32 = (xm - x0) as f32 / (ym - y0) as f32;
+
+    // Start x_start and x_end from the top vertex
+    let mut x_start = x0 as f32;
+    let mut x_end = x0 as f32;
+
+    // loop all the scanlines from top to bottom
+    for y in y0..(ym + 1) {
+        draw_line(frame, x_start as i32, y, x_end as i32, y, rgba);
+        x_start += inverse_slope1;
+        x_end += inverse_slope2;
+    }
 }
 
 fn fill_flat_top_triangle(
