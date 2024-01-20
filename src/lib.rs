@@ -3,6 +3,7 @@
 
 mod consts;
 mod display;
+mod helpers;
 mod mesh;
 mod triangle;
 mod vector;
@@ -10,7 +11,10 @@ mod vector;
 use std::time::Instant;
 
 use consts::*;
-use display::{clear_color_buffer, draw_grid, draw_line, draw_pixel, draw_rect, draw_triangle};
+use display::{
+    clear_color_buffer, draw_filled_triangle, draw_grid, draw_line, draw_pixel, draw_rect,
+    draw_triangle,
+};
 use error_iter::ErrorIter as _;
 use log::error;
 use mesh::{load_obj_file_data, Mesh};
@@ -191,7 +195,7 @@ impl Renderer {
 
         // * draw stuff here *
         // loop all projected triangles to render
-        for triangle in self.triangles_to_render.iter() {
+        /*for triangle in self.triangles_to_render.iter() {
             // draw unfilled faces
             draw_triangle(
                 frame,
@@ -203,7 +207,10 @@ impl Renderer {
                 triangle.points[2].y as i32,
                 C_GREEN,
             )
-        }
+        }*/
+
+        // test
+        draw_filled_triangle(frame, 300, 50, 50, 350, 500, 650, C_GREEN);
 
         // Clear the array of triangles to render every frame
         self.triangles_to_render.clear();

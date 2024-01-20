@@ -1,4 +1,7 @@
-use crate::consts::{HEIGHT, WIDTH};
+use crate::{
+    consts::{HEIGHT, WIDTH},
+    helpers::sort_vertices,
+};
 
 pub fn draw_pixel(frame: &mut [u8], xpos: usize, ypos: usize, rgba: [u8; 4]) {
     if xpos < WIDTH as usize && ypos < HEIGHT as usize {
@@ -59,6 +62,54 @@ pub fn draw_triangle(
     draw_line(frame, x0, y0, x1, y1, rgba);
     draw_line(frame, x1, y1, x2, y2, rgba);
     draw_line(frame, x2, y2, x0, y0, rgba);
+}
+
+fn fill_flat_bottom_triangle(
+    frame: &mut [u8],
+    rgba: [u8; 4],
+    x0: i32,
+    y0: i32,
+    x1: i32,
+    y1: i32,
+    mx: i32,
+    my: i32,
+) {
+}
+
+fn fill_flat_top_triangle(
+    frame: &mut [u8],
+    rgba: [u8; 4],
+    x1: i32,
+    y1: i32,
+    mx: i32,
+    my: i32,
+    x2: i32,
+    y2: i32,
+) {
+}
+
+/// Draw a filled triangle with the flat-top/flat-bottom method.
+pub fn draw_filled_triangle(
+    frame: &mut [u8],
+    x0: i32,
+    y0: i32,
+    x1: i32,
+    y1: i32,
+    x2: i32,
+    y2: i32,
+    rgba: [u8; 4],
+) {
+    sort_vertices(x0, y0, x1, y1, x2, y2);
+
+    // Calculate the new vertex (middle point) with triangle similarity
+    let my = y1;
+    let mx = (((x2 - x0) * (y1 - y0)) as f32 / (y2 - y0) as f32) as i32 + x0;
+
+    // Draw flat-bottom triangle
+    fill_flat_bottom_triangle(frame, rgba, x0, y0, x1, y1, mx, my);
+
+    // Draw flat-top triangle
+    fill_flat_top_triangle(frame, rgba, x1, y1, mx, my, x2, y2);
 }
 
 pub fn draw_rect(
