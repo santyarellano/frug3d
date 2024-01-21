@@ -50,21 +50,6 @@ pub fn draw_line(frame: &mut [u8], x0: i32, y0: i32, x1: i32, y1: i32, rgba: [u8
     }
 }
 
-pub fn draw_triangle(
-    frame: &mut [u8],
-    x0: i32,
-    y0: i32,
-    x1: i32,
-    y1: i32,
-    x2: i32,
-    y2: i32,
-    rgba: [u8; 4],
-) {
-    draw_line(frame, x0, y0, x1, y1, rgba);
-    draw_line(frame, x1, y1, x2, y2, rgba);
-    draw_line(frame, x2, y2, x0, y0, rgba);
-}
-
 fn fill_flat_bottom_triangle(
     frame: &mut [u8],
     rgba: [u8; 4],
@@ -98,35 +83,79 @@ fn fill_flat_top_triangle(
     rgba: [u8; 4],
     x1: i32,
     y1: i32,
-    mx: i32,
-    my: i32,
+    xm: i32,
+    ym: i32,
     x2: i32,
     y2: i32,
 ) {
+    // Find the 2 slopes (two triangle legs)
+    //  slope1 = c2 -> c1
+    //  slope2 = c2 -> cm
+    let inverse_slope1: f32 = (x2 - x1) as f32 / (y2 - y1) as f32;
+    let inverse_slope2: f32 = (x2 - xm) as f32 / (y2 - ym) as f32;
+
+    // Start x_start and x_end from the bottom vertex
+    let mut x_start = x2 as f32;
+    let mut x_end = x2 as f32;
+
+    // loop all the scanlines from bottom to top
+    for y in (y1..(y2 + 1)).rev() {
+        draw_line(frame, x_start as i32, y, x_end as i32, y, rgba);
+        x_start -= inverse_slope1;
+        x_end -= inverse_slope2;
+    }
 }
 
 /// Draw a filled triangle with the flat-top/flat-bottom method.
 pub fn draw_filled_triangle(
     frame: &mut [u8],
+    mut x0: i32,
+    mut y0: i32,
+    mut x1: i32,
+    mut y1: i32,
+    mut x2: i32,
+    mut y2: i32,
+    rgba: [u8; 4],
+) {
+    sort_vertices(&mut x0, &mut y0, &mut x1, &mut y1, &mut x2, &mut y2);
+
+    if y1 == y2 {
+        // Just draw upper half to avoid division by 0.
+        fill_flat_bottom_triangle(frame, rgba, x0, y0, x1, y1, x2, y2);
+    } else if y0 == y1 {
+        // Just draw the bottom half to avoid division by 0.
+        fill_flat_top_triangle(frame, rgba, x0, y0, x1, y1, x2, y2);
+    } else {
+        // Calculate the new vertex (middle point) with triangle similarity
+        let my = y1;
+        let mx = ((x2 - x0) * (y1 - y0)) / (y2 - y0) + x0;
+
+        // Draw flat-bottom triangle
+        fill_flat_bottom_triangle(frame, rgba, x0, y0, x1, y1, mx, my);
+
+        // Draw flat-top triangle
+        fill_flat_top_triangle(frame, rgba, x1, y1, mx, my, x2, y2);
+    }
+}
+
+pub fn draw_triangle(
+    frame: &mut [u8],
+    rgba: [u8; 4],
+    fill: bool,
     x0: i32,
     y0: i32,
     x1: i32,
     y1: i32,
     x2: i32,
     y2: i32,
-    rgba: [u8; 4],
 ) {
-    sort_vertices(x0, y0, x1, y1, x2, y2);
-
-    // Calculate the new vertex (middle point) with triangle similarity
-    let my = y1;
-    let mx = (((x2 - x0) * (y1 - y0)) as f32 / (y2 - y0) as f32) as i32 + x0;
-
-    // Draw flat-bottom triangle
-    fill_flat_bottom_triangle(frame, rgba, x0, y0, x1, y1, mx, my);
-
-    // Draw flat-top triangle
-    fill_flat_top_triangle(frame, rgba, x1, y1, mx, my, x2, y2);
+    if fill {
+        draw_filled_triangle(frame, x0, y0, x1, y1, x2, y2, rgba);
+    } else {
+        draw_line(frame, x0, y0, x1, y1, rgba);
+        draw_line(frame, x1, y1, x2, y2, rgba);
+        draw_line(frame, x2, y2, x0, y0, rgba);
+    }
 }
 
 pub fn draw_rect(

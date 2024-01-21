@@ -195,22 +195,33 @@ impl Renderer {
 
         // * draw stuff here *
         // loop all projected triangles to render
-        /*for triangle in self.triangles_to_render.iter() {
-            // draw unfilled faces
+        for triangle in self.triangles_to_render.iter() {
+            // draw filled faces
             draw_triangle(
                 frame,
+                C_BLUE,
+                true,
                 triangle.points[0].x as i32,
                 triangle.points[0].y as i32,
                 triangle.points[1].x as i32,
                 triangle.points[1].y as i32,
                 triangle.points[2].x as i32,
                 triangle.points[2].y as i32,
-                C_GREEN,
-            )
-        }*/
+            );
 
-        // test
-        draw_filled_triangle(frame, 300, 50, 50, 350, 500, 650, C_GREEN);
+            // draw edges
+            draw_triangle(
+                frame,
+                C_GREEN,
+                false,
+                triangle.points[0].x as i32,
+                triangle.points[0].y as i32,
+                triangle.points[1].x as i32,
+                triangle.points[1].y as i32,
+                triangle.points[2].x as i32,
+                triangle.points[2].y as i32,
+            );
+        }
 
         // Clear the array of triangles to render every frame
         self.triangles_to_render.clear();

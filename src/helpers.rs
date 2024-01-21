@@ -1,17 +1,24 @@
 use std::mem::swap;
 
 /// Sort vertices by ascending y-coordinate (y0 < y1 < y2)
-pub fn sort_vertices(mut x0: i32, mut y0: i32, mut x1: i32, mut y1: i32, mut x2: i32, mut y2: i32) {
+pub fn sort_vertices(
+    x0: &mut i32,
+    y0: &mut i32,
+    x1: &mut i32,
+    y1: &mut i32,
+    x2: &mut i32,
+    y2: &mut i32,
+) {
     if y0 > y1 {
-        swap(&mut y0, &mut y1);
-        swap(&mut x0, &mut x1);
+        swap(y0, y1);
+        swap(x0, x1);
     }
     if y1 > y2 {
-        swap(&mut y1, &mut y2);
-        swap(&mut x1, &mut x2);
+        swap(y1, y2);
+        swap(x1, x2);
     }
     if y0 > y1 {
-        swap(&mut y0, &mut y1);
-        swap(&mut x0, &mut x1);
+        swap(y0, y1);
+        swap(x0, x1);
     }
 }
