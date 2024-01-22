@@ -180,6 +180,9 @@ impl Renderer {
                 projected_triangle.points[j] = projected_point;
             }
 
+            // set the color for that face
+            projected_triangle.rgba = mesh_face.rgba;
+
             // save the projected triangle in the array of triangles to render
             // triangles_to_render[i] = projected_triangle;
             self.triangles_to_render.push(projected_triangle);
@@ -199,7 +202,7 @@ impl Renderer {
             // draw filled faces
             draw_triangle(
                 frame,
-                C_BLUE,
+                triangle.rgba,
                 true,
                 triangle.points[0].x as i32,
                 triangle.points[0].y as i32,

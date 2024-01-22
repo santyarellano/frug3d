@@ -3,6 +3,7 @@ use std::io::{BufRead, BufReader, Error};
 
 use sscanf::scanf;
 
+use crate::consts::{self, C_BLUE, C_GREEN};
 use crate::{triangle::Face, vector::Vec3};
 
 // ===================================================================
@@ -90,6 +91,7 @@ pub fn load_obj_file_data(filename: String) -> Result<Mesh, Error> {
                 a: vertex_indices[0],
                 b: vertex_indices[1],
                 c: vertex_indices[2],
+                rgba: C_BLUE, // Hardcoded
             };
 
             mesh.faces.push(face);
