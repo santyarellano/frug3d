@@ -7,8 +7,10 @@ pub struct Face {
     pub rgba: [u8; 4],
 }
 
+#[derive(Clone, Copy)]
 pub struct Triangle {
     pub points: [Vec2; 3],
+    pub avg_depth: f32,
     pub rgba: [u8; 4],
 }
 
@@ -26,6 +28,7 @@ impl Default for Triangle {
                     ..Default::default()
                 },
             ],
+            avg_depth: 0.0,
             rgba: C_MAGENTA,
         }
     }

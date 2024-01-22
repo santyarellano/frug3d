@@ -8,6 +8,7 @@ mod mesh;
 mod triangle;
 mod vector;
 
+use std::mem::swap;
 use std::time::Instant;
 
 use consts::*;
@@ -178,7 +179,11 @@ impl Renderer {
 
                 // save that point
                 projected_triangle.points[j] = projected_point;
+                projected_triangle.avg_depth += transformed_vertices[j].z;
             }
+
+            // Finish calculating the averga depth for each face based on the vertices after transformation.
+            projected_triangle.avg_depth /= 3.0;
 
             // set the color for that face
             projected_triangle.rgba = mesh_face.rgba;
@@ -186,6 +191,19 @@ impl Renderer {
             // save the projected triangle in the array of triangles to render
             // triangles_to_render[i] = projected_triangle;
             self.triangles_to_render.push(projected_triangle);
+        }
+
+        // Sort the triangles to render by their avg_depth
+        //  TODO: THIS IS NOT OPTIMAL AND COULD *EASILY* BE OPTIMIZED WITH A BETTER ALGORITHM. (using bubble sort now)
+        for i in 0..self.triangles_to_render.len() {
+            for j in i..self.triangles_to_render.len() {
+                if self.triangles_to_render[i].avg_depth < self.triangles_to_render[j].avg_depth {
+                    // swap the triangles
+                    let temp = self.triangles_to_render[i].clone();
+                    self.triangles_to_render[i] = self.triangles_to_render[j];
+                    self.triangles_to_render[i] = temp;
+                }
+            }
         }
     }
 
