@@ -47,8 +47,6 @@ fn project(point: &Vec3, fov_factor: f32) -> Vec2 {
 /// Representation of the application state. In this example, a box will bounce around the screen.
 struct Renderer {
     is_running: bool,
-    previous_frame_time: u16,
-    current_time: Instant,
     camera_pos: Vec3,
     fov_factor: f32,
     mesh: Mesh,
@@ -61,12 +59,8 @@ impl Renderer {
         let mesh =
             load_obj_file_data("assets/cube.obj".to_string()).expect("Error reading object data");
 
-        let current_time = Instant::now();
-
         Self {
             is_running: true,
-            previous_frame_time: 0,
-            current_time,
             camera_pos: Vec3 {
                 x: 0.0,
                 y: 0.0,
