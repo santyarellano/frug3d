@@ -4,6 +4,7 @@
 mod consts;
 mod display;
 mod helpers;
+mod matrix;
 mod mesh;
 mod triangle;
 mod vector;
@@ -18,10 +19,11 @@ use display::{
 };
 use error_iter::ErrorIter as _;
 use log::error;
+use matrix::{mat4_make_scale, mat4_make_translation, mat4_mul_vec4};
 use mesh::{load_obj_file_data, Mesh};
 use pixels::{Error, Pixels, SurfaceTexture};
 use triangle::Triangle;
-use vector::{Vec2, Vec3};
+use vector::{vec3_from_vec4, vec4_from_vec3, Vec2, Vec3, Vec4};
 use winit::dpi::LogicalSize;
 use winit::event::{Event, VirtualKeyCode};
 use winit::event_loop::{ControlFlow, EventLoop};
@@ -54,7 +56,7 @@ impl Renderer {
     /// Create a new `Renderer` instance that can draw a moving box.
     fn new() -> Self {
         let mesh =
-            load_obj_file_data("assets/f22.obj".to_string()).expect("Error reading object data");
+            load_obj_file_data("assets/cube.obj".to_string()).expect("Error reading object data");
 
         let current_time = Instant::now();
 
@@ -86,6 +88,24 @@ impl Renderer {
         self.mesh.rotation.y += 0.01;
         self.mesh.rotation.z += 0.01;
 
+        // change scale (temporal)
+        self.mesh.scale.x += 0.002;
+        self.mesh.scale.y += 0.001;
+
+        // translate the vertex away from the camera
+        self.mesh.translation.z = 5.0;
+
+        // Change translation
+        self.mesh.translation.x += 0.01;
+
+        // Create matrix for scale and translation
+        let scale_matrix = mat4_make_scale(self.mesh.scale.x, self.mesh.scale.y, self.mesh.scale.z);
+        let translation_matrix = mat4_make_translation(
+            self.mesh.translation.x,
+            self.mesh.translation.y,
+            self.mesh.translation.z,
+        );
+
         // loop all triangle faces
         for mesh_face in self.mesh.faces.iter() {
             let mut face_vertices: [Vec3; 3] = [
@@ -110,19 +130,19 @@ impl Renderer {
             face_vertices[1] = self.mesh.vertices[(mesh_face.b - 1) as usize];
             face_vertices[2] = self.mesh.vertices[(mesh_face.c - 1) as usize];
 
-            let mut transformed_vertices: [Vec3; 3] = [
+            let mut transformed_vertices: [Vec4; 3] = [
                 {
-                    Vec3 {
+                    Vec4 {
                         ..Default::default()
                     }
                 },
                 {
-                    Vec3 {
+                    Vec4 {
                         ..Default::default()
                     }
                 },
                 {
-                    Vec3 {
+                    Vec4 {
                         ..Default::default()
                     }
                 },
@@ -130,22 +150,20 @@ impl Renderer {
 
             // * loop all 3 vertices of this current face and apply transformations *
             for j in 0..3 {
-                let mut transformed_vertex = face_vertices[j];
-                transformed_vertex = vec3_rotate_x(&transformed_vertex, self.mesh.rotation.x);
-                transformed_vertex = vec3_rotate_y(&transformed_vertex, self.mesh.rotation.y);
-                transformed_vertex = vec3_rotate_z(&transformed_vertex, self.mesh.rotation.z);
+                let mut transformed_vertex = vec4_from_vec3(&face_vertices[j]);
 
-                // translate the vertex away from the camera
-                transformed_vertex.z += 5.0;
+                // Use a matrix to scale and translate our original vertex
+                transformed_vertex = mat4_mul_vec4(&scale_matrix, &transformed_vertex);
+                transformed_vertex = mat4_mul_vec4(&translation_matrix, &transformed_vertex);
 
                 // save transformed vertex
                 transformed_vertices[j] = transformed_vertex;
             }
 
             // * Check backface culling *
-            let vec_a = transformed_vertices[0];
-            let vec_b = transformed_vertices[1];
-            let vec_c = transformed_vertices[2];
+            let vec_a = vec3_from_vec4(&transformed_vertices[0]);
+            let vec_b = vec3_from_vec4(&transformed_vertices[1]);
+            let vec_c = vec3_from_vec4(&transformed_vertices[2]);
 
             let mut vec_ab = vec3_sub(&vec_b, &vec_a); // B-A
             let mut vec_ac = vec3_sub(&vec_c, &vec_a); // C-A
@@ -171,7 +189,8 @@ impl Renderer {
             };
             for j in 0..3 {
                 // project the current vertex
-                let mut projected_point = project(&transformed_vertices[j], self.fov_factor);
+                let mut projected_point =
+                    project(&vec3_from_vec4(&transformed_vertices[j]), self.fov_factor);
 
                 // scale and translate the projected points to the middle of the screen
                 projected_point.x += (WIDTH / 2) as f32;

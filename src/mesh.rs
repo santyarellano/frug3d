@@ -13,6 +13,8 @@ pub struct Mesh {
     pub vertices: Vec<Vec3>,
     pub faces: Vec<Face>,
     pub rotation: Vec3,
+    pub scale: Vec3,
+    pub translation: Vec3,
 }
 
 impl Default for Mesh {
@@ -21,6 +23,14 @@ impl Default for Mesh {
             vertices: Vec::new(),
             faces: Vec::new(),
             rotation: Vec3 {
+                ..Default::default()
+            },
+            scale: Vec3 {
+                x: 1.0,
+                y: 1.0,
+                z: 1.0,
+            },
+            translation: Vec3 {
                 ..Default::default()
             },
         }

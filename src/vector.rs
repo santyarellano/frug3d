@@ -27,6 +27,24 @@ impl Default for Vec3 {
     }
 }
 
+pub struct Vec4 {
+    pub x: f32,
+    pub y: f32,
+    pub z: f32,
+    pub w: f32,
+}
+
+impl Default for Vec4 {
+    fn default() -> Self {
+        Vec4 {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+            w: 0.0,
+        }
+    }
+}
+
 // ===============================================================================
 // Vector 2D functions
 // ===============================================================================
@@ -150,6 +168,26 @@ pub fn vec3_rotate_z(v: &Vec3, angle: f32) -> Vec3 {
     Vec3 {
         x: v.x * angle.cos() - v.y * angle.sin(),
         y: v.x * angle.sin() + v.y * angle.cos(),
+        z: v.z,
+    }
+}
+
+// ===============================================================================
+// Vector conversion functions
+// ===============================================================================
+pub fn vec4_from_vec3(v: &Vec3) -> Vec4 {
+    Vec4 {
+        x: v.x,
+        y: v.y,
+        z: v.z,
+        w: 1.0,
+    }
+}
+
+pub fn vec3_from_vec4(v: &Vec4) -> Vec3 {
+    Vec3 {
+        x: v.x,
+        y: v.y,
         z: v.z,
     }
 }
