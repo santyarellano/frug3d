@@ -87,13 +87,13 @@ impl Renderer {
 
         // change scale (temporal)
         self.mesh.scale.x += 0.002;
-        self.mesh.scale.y += 0.001;
+        //self.mesh.scale.y += 0.001;
 
         // translate the vertex away from the camera
         self.mesh.translation.z = 5.0;
 
         // Change translation
-        self.mesh.translation.x += 0.01;
+        //self.mesh.translation.x += 0.01;
 
         // Create transformation matrix
         let mut transformation_matrix = mat4_identity();
@@ -109,6 +109,7 @@ impl Renderer {
             let rotation_y_matrix = mat4_make_rotation_y(self.mesh.rotation.y);
             let rotation_z_matrix = mat4_make_rotation_z(self.mesh.rotation.z);
 
+            // Note: the order of these multiplications matters!! scale -> rotate -> translate
             transformation_matrix = mat4_mul_mat4(&scale_matrix, &transformation_matrix);
             transformation_matrix = mat4_mul_mat4(&rotation_x_matrix, &transformation_matrix);
             transformation_matrix = mat4_mul_mat4(&rotation_y_matrix, &transformation_matrix);
