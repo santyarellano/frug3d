@@ -20,8 +20,8 @@ use display::{
 use error_iter::ErrorIter as _;
 use log::error;
 use matrix::{
-    mat4_make_rotation_x, mat4_make_rotation_y, mat4_make_rotation_z, mat4_make_scale,
-    mat4_make_translation, mat4_mul_vec4,
+    mat4_identity, mat4_make_rotation_x, mat4_make_rotation_y, mat4_make_rotation_z,
+    mat4_make_scale, mat4_make_translation, mat4_mul_mat4, mat4_mul_vec4,
 };
 use mesh::{load_obj_file_data, Mesh};
 use pixels::{Error, Pixels, SurfaceTexture};
@@ -86,25 +86,35 @@ impl Renderer {
         self.mesh.rotation.z += 0.01;
 
         // change scale (temporal)
-        /*self.mesh.scale.x += 0.002;
-        self.mesh.scale.y += 0.001;*/
+        self.mesh.scale.x += 0.002;
+        self.mesh.scale.y += 0.001;
 
         // translate the vertex away from the camera
         self.mesh.translation.z = 5.0;
 
         // Change translation
-        //self.mesh.translation.x += 0.01;
+        self.mesh.translation.x += 0.01;
 
-        // Create matrix transformations
-        let scale_matrix = mat4_make_scale(self.mesh.scale.x, self.mesh.scale.y, self.mesh.scale.z);
-        let translation_matrix = mat4_make_translation(
-            self.mesh.translation.x,
-            self.mesh.translation.y,
-            self.mesh.translation.z,
-        );
-        let rotation_x_matrix = mat4_make_rotation_x(self.mesh.rotation.x);
-        let rotation_y_matrix = mat4_make_rotation_y(self.mesh.rotation.y);
-        let rotation_z_matrix = mat4_make_rotation_z(self.mesh.rotation.z);
+        // Create transformation matrix
+        let mut transformation_matrix = mat4_identity();
+        {
+            let scale_matrix =
+                mat4_make_scale(self.mesh.scale.x, self.mesh.scale.y, self.mesh.scale.z);
+            let translation_matrix = mat4_make_translation(
+                self.mesh.translation.x,
+                self.mesh.translation.y,
+                self.mesh.translation.z,
+            );
+            let rotation_x_matrix = mat4_make_rotation_x(self.mesh.rotation.x);
+            let rotation_y_matrix = mat4_make_rotation_y(self.mesh.rotation.y);
+            let rotation_z_matrix = mat4_make_rotation_z(self.mesh.rotation.z);
+
+            transformation_matrix = mat4_mul_mat4(&scale_matrix, &transformation_matrix);
+            transformation_matrix = mat4_mul_mat4(&rotation_x_matrix, &transformation_matrix);
+            transformation_matrix = mat4_mul_mat4(&rotation_y_matrix, &transformation_matrix);
+            transformation_matrix = mat4_mul_mat4(&rotation_z_matrix, &transformation_matrix);
+            transformation_matrix = mat4_mul_mat4(&translation_matrix, &transformation_matrix);
+        }
 
         // loop all triangle faces
         for mesh_face in self.mesh.faces.iter() {
@@ -153,11 +163,7 @@ impl Renderer {
                 let mut transformed_vertex = vec4_from_vec3(&face_vertices[j]);
 
                 // Use a matrix to transform our original vertex
-                transformed_vertex = mat4_mul_vec4(&scale_matrix, &transformed_vertex);
-                transformed_vertex = mat4_mul_vec4(&rotation_x_matrix, &transformed_vertex);
-                transformed_vertex = mat4_mul_vec4(&rotation_y_matrix, &transformed_vertex);
-                transformed_vertex = mat4_mul_vec4(&rotation_z_matrix, &transformed_vertex);
-                transformed_vertex = mat4_mul_vec4(&translation_matrix, &transformed_vertex);
+                transformed_vertex = mat4_mul_vec4(&transformation_matrix, &transformed_vertex);
 
                 // save transformed vertex
                 transformed_vertices[j] = transformed_vertex;

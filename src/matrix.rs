@@ -4,6 +4,19 @@ pub struct Mat4 {
     pub m: [[f32; 4]; 4],
 }
 
+impl Default for Mat4 {
+    fn default() -> Self {
+        Mat4 {
+            m: [
+                [0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0],
+                [0.0, 0.0, 0.0, 0.0],
+            ],
+        }
+    }
+}
+
 /// | 1 0 0 0 |
 /// | 0 1 0 0 |
 /// | 0 0 1 0 |
@@ -105,4 +118,22 @@ pub fn mat4_mul_vec4(m: &Mat4, v: &Vec4) -> Vec4 {
         z: m.m[2][0] * v.x + m.m[2][1] * v.y + m.m[2][2] * v.z + m.m[2][3] * v.w,
         w: m.m[3][0] * v.x + m.m[3][1] * v.y + m.m[3][2] * v.z + m.m[3][3] * v.w,
     }
+}
+
+/// Multiplies a matrix (4d) with a matrix (4d), returning a mat4
+pub fn mat4_mul_mat4(a: &Mat4, b: &Mat4) -> Mat4 {
+    let mut mat: Mat4 = Mat4 {
+        ..Default::default()
+    };
+
+    for i in 0..4 {
+        for j in 0..4 {
+            mat.m[i][j] = a.m[i][0] * b.m[0][j]
+                + a.m[i][1] * b.m[1][j]
+                + a.m[i][2] * b.m[2][j]
+                + a.m[i][3] * b.m[3][j];
+        }
+    }
+
+    return mat;
 }
