@@ -110,6 +110,38 @@ pub fn mat4_make_rotation_z(angle: f32) -> Mat4 {
     return m;
 }
 
+/// | (h/w)*1/tan(fov/2)        0               0               0           |
+/// |         0            1/tan(fov/2)         0               0           |
+/// |         0                 0           zf/(zf-zn)  (-zf*zn)/(zf-zn)    |
+/// |         0                 0               1               0           |
+pub fn mat4_make_perspective(fov: f32, aspect: f32, znear: f32, zfar: f32) -> Mat4 {
+    let mut m: Mat4 = Mat4 {
+        ..Default::default()
+    };
+
+    m.m[0][0] = aspect * (1.0 / (fov / 2.0).tan());
+    m.m[1][1] = 1.0 / (fov / 2.0).tan();
+    m.m[2][2] = zfar / (zfar - znear);
+    m.m[2][3] = (-zfar * znear) / (zfar - znear);
+    m.m[3][2] = 1.0;
+
+    return m;
+}
+
+pub fn mat4_mul_vec4_project(mat_proj: &Mat4, v: &Vec4) -> Vec4 {
+    // multiply the projection matrix by our original vector
+    let mut result = mat4_mul_vec4(mat_proj, v);
+
+    // perform perspective divide with original z-value that is now stored in w
+    if result.w != 0.0 {
+        result.x /= result.w;
+        result.y /= result.w;
+        result.z /= result.w;
+    }
+
+    return result;
+}
+
 /// Multiplies a matrix (4d) with a Vec4, returning a Vec4
 pub fn mat4_mul_vec4(m: &Mat4, v: &Vec4) -> Vec4 {
     Vec4 {

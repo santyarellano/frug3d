@@ -9,6 +9,7 @@ mod mesh;
 mod triangle;
 mod vector;
 
+use std::f32::consts::PI;
 use std::mem::swap;
 use std::time::Instant;
 
@@ -20,8 +21,9 @@ use display::{
 use error_iter::ErrorIter as _;
 use log::error;
 use matrix::{
-    mat4_identity, mat4_make_rotation_x, mat4_make_rotation_y, mat4_make_rotation_z,
-    mat4_make_scale, mat4_make_translation, mat4_mul_mat4, mat4_mul_vec4,
+    mat4_identity, mat4_make_perspective, mat4_make_rotation_x, mat4_make_rotation_y,
+    mat4_make_rotation_z, mat4_make_scale, mat4_make_translation, mat4_mul_mat4, mat4_mul_vec4,
+    mat4_mul_vec4_project, Mat4,
 };
 use mesh::{load_obj_file_data, Mesh};
 use pixels::{Error, Pixels, SurfaceTexture};
@@ -37,18 +39,11 @@ use crate::vector::{
     vec3_cross, vec3_dot, vec3_normalize, vec3_rotate_x, vec3_rotate_y, vec3_rotate_z, vec3_sub,
 };
 
-fn project(point: &Vec3, fov_factor: f32) -> Vec2 {
-    Vec2 {
-        x: point.x * fov_factor / point.z,
-        y: point.y * fov_factor / point.z,
-    }
-}
-
 /// Representation of the application state. In this example, a box will bounce around the screen.
 struct Renderer {
     is_running: bool,
     camera_pos: Vec3,
-    fov_factor: f32,
+    projection_matrix: Mat4,
     mesh: Mesh,
     triangles_to_render: Vec<Triangle>,
 }
@@ -59,6 +54,12 @@ impl Renderer {
         let mesh =
             load_obj_file_data("assets/cube.obj".to_string()).expect("Error reading object data");
 
+        let fov = PI / 3.0; // 180 / 3 = 60 degrees.
+        let aspect = HEIGHT as f32 / WIDTH as f32;
+        let znear = 0.1;
+        let zfar = 100.0;
+        let projection_matrix = mat4_make_perspective(fov, aspect, znear, zfar);
+
         Self {
             is_running: true,
             camera_pos: Vec3 {
@@ -66,7 +67,7 @@ impl Renderer {
                 y: 0.0,
                 z: 0.0,
             },
-            fov_factor: 640.0,
+            projection_matrix,
             mesh,
             triangles_to_render: Vec::new(),
         }
@@ -86,7 +87,7 @@ impl Renderer {
         self.mesh.rotation.z += 0.01;
 
         // change scale (temporal)
-        self.mesh.scale.x += 0.002;
+        //self.mesh.scale.x += 0.002;
         //self.mesh.scale.y += 0.001;
 
         // translate the vertex away from the camera
@@ -200,14 +201,21 @@ impl Renderer {
             for j in 0..3 {
                 // project the current vertex
                 let mut projected_point =
-                    project(&vec3_from_vec4(&transformed_vertices[j]), self.fov_factor);
+                    mat4_mul_vec4_project(&self.projection_matrix, &transformed_vertices[j]);
 
-                // scale and translate the projected points to the middle of the screen
+                // Scale into the view
+                projected_point.x *= WIDTH as f32 / 2.0;
+                projected_point.y *= HEIGHT as f32 / 2.0;
+
+                // translate the projected points to the middle of the screen
                 projected_point.x += (WIDTH / 2) as f32;
                 projected_point.y += (HEIGHT / 2) as f32;
 
                 // save that point
-                projected_triangle.points[j] = projected_point;
+                projected_triangle.points[j] = Vec2 {
+                    x: projected_point.x,
+                    y: projected_point.y,
+                };
                 projected_triangle.avg_depth += transformed_vertices[j].z;
             }
 
