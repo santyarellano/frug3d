@@ -4,6 +4,7 @@
 mod consts;
 mod display;
 mod helpers;
+mod light;
 mod matrix;
 mod mesh;
 mod triangle;
@@ -19,6 +20,7 @@ use display::{
     draw_triangle,
 };
 use error_iter::ErrorIter as _;
+use light::{light_apply_intensity, Light};
 use log::error;
 use matrix::{
     mat4_identity, mat4_make_perspective, mat4_make_rotation_x, mat4_make_rotation_y,
@@ -89,6 +91,15 @@ impl Renderer {
         // change scale (temporal)
         //self.mesh.scale.x += 0.002;
         //self.mesh.scale.y += 0.001;
+
+        // light (temporal)
+        let light_dir = Light {
+            direction: Vec3 {
+                x: 0.0,
+                y: 0.0,
+                z: 1.0,
+            },
+        };
 
         // translate the vertex away from the camera
         self.mesh.translation.z = 5.0;
@@ -222,8 +233,22 @@ impl Renderer {
             // Finish calculating the averga depth for each face based on the vertices after transformation.
             projected_triangle.avg_depth /= 3.0;
 
-            // set the color for that face
-            projected_triangle.rgba = mesh_face.rgba;
+            // Calculate color based on light
+            let light_intensity_factor = -vec3_dot(&normal, &light_dir.direction);
+            println!(
+                "color: [{}, {}, {}]",
+                mesh_face.rgba[0], mesh_face.rgba[1], mesh_face.rgba[2]
+            );
+
+            projected_triangle.rgba =
+                light_apply_intensity(&mesh_face.rgba, light_intensity_factor);
+
+            println!(
+                "light: [{}, {}, {}]",
+                projected_triangle.rgba[0], projected_triangle.rgba[1], projected_triangle.rgba[2]
+            );
+
+            println!("factor: {light_intensity_factor}");
 
             // save the projected triangle in the array of triangles to render
             // triangles_to_render[i] = projected_triangle;
@@ -268,7 +293,7 @@ impl Renderer {
             );
 
             // draw edges
-            draw_triangle(
+            /*draw_triangle(
                 frame,
                 C_GREEN,
                 false,
@@ -278,7 +303,7 @@ impl Renderer {
                 triangle.points[1].y as i32,
                 triangle.points[2].x as i32,
                 triangle.points[2].y as i32,
-            );
+            );*/
         }
 
         // Clear the array of triangles to render every frame
